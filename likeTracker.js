@@ -1,4 +1,5 @@
 const {TwitterApi} = require('twitter-api-v2');
+const { sleepSecs } = require('twitter-api-v2/dist/v1/media-helpers.v1');
 
 const token = process.env.BEARER_TOKEN;
 const client = new TwitterApi(token);
@@ -24,19 +25,35 @@ async function lookup() {
 
 }
 
-// while (True)
+async function shoot() {
+    //Test print // expand later
+    console.log("New like found")
+}
+
 
 
 (async () => {
-    try {
-        const resp = await lookup();
-        console.log(resp);
-    
-    } catch (e) {
-      console.log(e);
-      process.exit(-1);
+    while (true) {
+        process.on('SIGNIT', () => {
+            console.log("Exiting...")
+            process.exit();
+        })
+
+        await sleepSecs(5) // On 5 second delay while testing, idk what this'll end up being
+
+        try {
+            const resp = await lookup();
+            if ( (recentLike != -1) && (recentLike != currLike) ) {
+                shoot()
+            }
+            recentLike = currLike
+            console.log(resp);
+        
+        } catch (e) {
+          console.log(e);
+          process.exit(-1);
+        } 
     }
-    process.exit();
   })();
 
 
