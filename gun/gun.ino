@@ -1,33 +1,31 @@
-char val;
-int act1 = 13;
-int act2 = 12;
+int act1 = 12;
+int act2 = 11;
 
 void setup() {
     pinMode(act1, OUTPUT);
     pinMode(act2, OUTPUT);
+
+    Serial.begin(9600);
 }
 
 void loop() {
-    if (Serial.available()) {
-        val = Serial.read();
-    }
+    int val = Serial.readString().toInt();
 
-    if (val == 'H') {
+    if (val == 2) {
         //Push forward
         digitalWrite(act1, HIGH);
         digitalWrite(act2, LOW);
-    } else if (val == 'L') {
+    } else if (val == 1) {
         //Pull back
         digitalWrite(act1, LOW);
         digitalWrite(act2, HIGH);
-    } else if (val == 'X') {
+    } else if (val == 3) {
         //Cut power
         digitalWrite(act1, LOW);
         digitalWrite(act2, LOW);
     }
 
-    Serial.end();
-    Serial.begin(9600);
+    
 
     delay(100);
 }

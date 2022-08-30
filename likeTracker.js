@@ -1,42 +1,26 @@
 const {TwitterApi} = require('twitter-api-v2');
 const { sleepSecs } = require('twitter-api-v2/dist/v1/media-helpers.v1');
+const { SerialPort } = require('serialport');
+require("dotenv").config();
 
 const token = process.env.BEARER_TOKEN;
 const client = new TwitterApi(token);
 const user = "769604882370224128";
 
-var btsp = require('bluetooth-serial-port')
-var serial = new btsp.BluetoothSerialPort();
-
 var recentLike = -1;
 var currLike;
 var likeCount = 0;
 
-const errFunction = (err) => {
-    if (err) {
-        console.log('Error', err)
-    }
-}
 
-serial.on('found', function (address, name) {
-    serial.findSerial.PortChannel(address, function (channel) {
-        serial.connect(address, channel, function () {
-            console.log("Serial connected")
 
-            serial.on('data', function (buffer) {
-                console.log(buffer.toString('utf-8'))
-            })
-        }, function () {
-            console.log('Serial failed to connect')
-        })
+const port = new SerialPort({
+    path: "COM4",
+    baudRate: 9600 
+})
 
-        serial.close()
-    }, function () {
-        console.log('Found nothing')
-    })
-});
-
-serial.inquire()
+port.on('open', () => {
+    console.log('Serial port opened');
+})
 
 
 async function lookup() {
@@ -49,7 +33,6 @@ async function lookup() {
 
 
     currLike = likedTweets.tweets[0].id;
-    // console.log(likedTweets.tweets[0].id);
 
     return currLike;
 
@@ -61,42 +44,31 @@ async function shoot() {
     likeCount++
     
     //Retract
-    serial.write(Buffer.from('L', 'utf-8'), function (err, bytesWritten) {
-        if (err) console.log(err)
-    })
+    port.write('1', 'utf-8')
 
-    await sleepSecs(0.5)
+    await sleepSecs(2)
 
     //Extend
-    serial.write(Buffer.from('H', 'utf-8'), function (err, bytesWritten) {
-        if (err) console.log(err)
-    })
+    port.write('2', 'utf-8')
 
-    await sleepSecs(0.5)
+    await sleepSecs(1)
 
     //Cut power
-    serial.write(Buffer.from('X', 'utf-8'), function (err, bytesWritten) {
-        if (err) console.log(err)
-    })
+    port.write('3', 'utf-8')
 }
 
 
 async function dump() {
-    serial.write(Buffer.from('L', 'utf-8'), function (err, bytesWritten) {
-        if (err) console.log(err)
-    })
+    likeCount = 0
+    port.write('1', 'utf-8')
 
-    await sleepSecs(3)
+    await sleepSecs(6)
 
-    serial.write(Buffer.from('H', 'utf-8'), function (err, bytesWritten) {
-        if (err) console.log(err)
-    })
+    port.write('2', 'utf-8')
 
-    await sleepSecs(0.5)
+    await sleepSecs(1)
 
-    serial.write(Buffer.from('X', 'utf-8'), function (err, bytesWritten) {
-        if (err) console.log(err)
-    })
+    port.write('3', 'utf-8')
 }
 
 
@@ -107,12 +79,12 @@ async function dump() {
             process.exit();
         })
 
-        await sleepSecs(5) // On 5 second delay while testing, idk what this'll end up being
+        await sleepSecs(6) 
 
         try {
             const resp = await lookup();
             if ( (recentLike != -1) && (recentLike != currLike) ) {
-                if (likeCount > 6) {
+                if (likeCount > 3) {
                     dump()
                 } else {
                     shoot()
